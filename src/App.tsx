@@ -73,6 +73,12 @@ export default function App() {
   const [editingDatetime, setEditingDatetime] = useState('');
   const [editingTimezone, setEditingTimezone] = useState('UTC');
   const [editingActivity, setEditingActivity] = useState('');
+  const [filterPosition, setFilterPosition] = useState('');
+  const [filterWorkGroup, setFilterWorkGroup] = useState('');
+  const [searchActivities, setSearchActivities] = useState('');
+
+  const POSITION_OPTIONS = ['Operations Section Chief', 'Planning Section Chief', 'Logistics Section Chief', 'Finance Section Chief', 'Safety Officer', 'Public Information Officer', 'Liaison Officer'];
+  const WORK_GROUP_OPTIONS = ['Command Staff', 'Operations', 'Planning', 'Logistics', 'Finance/Admin'];
 
   const clearAllViews = () => { setShowActivityLog(false); setShowNotifications(false); setShowReports(false); setShowResources(false); setShowIncidentRoster(false); setShowPlanningP(false); };
 
@@ -419,19 +425,6 @@ export default function App() {
                 My Position: IC
               </span>
             </div>
-            <div className="bg-purple-500/10 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-purple-400/20">
-              <span className="text-white text-sm">
-                Current Time: {new Date().toLocaleString('en-US', { 
-                  month: 'short', 
-                  day: 'numeric', 
-                  year: 'numeric',
-                  hour: '2-digit', 
-                  minute: '2-digit',
-                  hour12: false,
-                  timeZone: 'UTC'
-                })} UTC
-              </span>
-            </div>
 
             <TooltipProvider delayDuration={100}>
               <div className="flex items-center gap-2">
@@ -739,34 +732,78 @@ export default function App() {
                 {/* Buttons above table */}
                 <div className="flex items-center justify-between mb-3">
                   <div>
-                    {activityLogView === 'mine' && !showAddEntryRow && (
+                    {activityLogView === 'mine' && (
                       <Button
-                        onClick={() => setShowAddEntryRow(true)}
-                        variant="outline"
                         size="sm"
-                        className="flex items-center gap-2"
+                        onClick={() => setSubmitActivityLogModalOpen(true)}
+                        className="bg-accent hover:bg-accent/90 text-accent-foreground flex items-center gap-2"
                       >
-                        <Plus className="w-4 h-4" />
-                        Add Entry
+                        Submit Activity Log for {new Date(activityLogDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                       </Button>
                     )}
                   </div>
-                  {activityLogView === 'mine' && (
+                  {activityLogView === 'mine' && !showAddEntryRow && (
                     <Button
+                      onClick={() => setShowAddEntryRow(true)}
                       size="sm"
-                      onClick={() => setSubmitActivityLogModalOpen(true)}
-                      className="bg-accent hover:bg-accent/90 text-accent-foreground flex items-center gap-2"
+                      className="flex items-center gap-2 text-white hover:opacity-90"
+                      style={{ backgroundColor: '#1e3a5f' }}
                     >
-                      Submit Activity Log for {new Date(activityLogDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      <Plus className="w-4 h-4" />
+                      Add Entry
                     </Button>
                   )}
                 </div>
+                {activityLogView === 'all' && (
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="relative flex-shrink-0">
+                      <select
+                        value={filterPosition}
+                        onChange={(e) => setFilterPosition(e.target.value)}
+                        className="h-8 pl-2 pr-6 text-sm bg-card border border-border rounded-md text-foreground appearance-none cursor-pointer focus:outline-none focus:ring-1 focus:ring-accent"
+                      >
+                        <option value="">All Positions</option>
+                        {POSITION_OPTIONS.map((p) => (
+                          <option key={p} value={p}>{p}</option>
+                        ))}
+                      </select>
+                      <ChevronDown className="w-3 h-3 absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground" />
+                    </div>
+                    <div className="relative flex-shrink-0">
+                      <select
+                        value={filterWorkGroup}
+                        onChange={(e) => setFilterWorkGroup(e.target.value)}
+                        className="h-8 pl-2 pr-6 text-sm bg-card border border-border rounded-md text-foreground appearance-none cursor-pointer focus:outline-none focus:ring-1 focus:ring-accent"
+                      >
+                        <option value="">All Work Groups</option>
+                        {WORK_GROUP_OPTIONS.map((w) => (
+                          <option key={w} value={w}>{w}</option>
+                        ))}
+                      </select>
+                      <ChevronDown className="w-3 h-3 absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground" />
+                    </div>
+                    <div className="relative flex-1 max-w-xs">
+                      <Search className="w-3.5 h-3.5 absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                      <input
+                        type="text"
+                        value={searchActivities}
+                        onChange={(e) => setSearchActivities(e.target.value)}
+                        placeholder="Search activities..."
+                        className="h-8 w-full pl-7 pr-2 text-sm bg-card border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent"
+                      />
+                    </div>
+                  </div>
+                )}
                 <div className="border border-border rounded-lg overflow-hidden">
                   <table className="w-full">
                     <thead>
                       <tr className="bg-black border-b border-border">
                         {activityLogView === 'all' && (
-                          <th className="text-left px-4 py-3 font-medium w-1/5">Person</th>
+                          <>
+                            <th className="text-left px-4 py-3 font-medium">Position(s)</th>
+                            <th className="text-left px-4 py-3 font-medium">Work Group</th>
+                            <th className="text-left px-4 py-3 font-medium">Name</th>
+                          </>
                         )}
                         <th className="text-left px-4 py-3 font-medium w-1/3">Date & Time</th>
                         <th className="text-left px-4 py-3 font-medium">Notable Activities</th>
@@ -779,7 +816,11 @@ export default function App() {
                           {editingEntryId === entry.id ? (
                             <>
                               {activityLogView === 'all' && (
-                                <td className="px-4 py-3 text-sm text-muted-foreground">—</td>
+                                <>
+                                  <td className="px-4 py-3 text-sm text-muted-foreground">—</td>
+                                  <td className="px-4 py-3 text-sm text-muted-foreground">—</td>
+                                  <td className="px-4 py-3 text-sm text-muted-foreground">—</td>
+                                </>
                               )}
                               <td className="px-4 py-3">
                                 <div className="flex items-center gap-2">
@@ -838,7 +879,11 @@ export default function App() {
                           ) : (
                             <>
                               {activityLogView === 'all' && (
-                                <td className="px-4 py-3 text-sm">Captain Maria Rodriguez</td>
+                                <>
+                                  <td className="px-4 py-3 text-sm">Operations Section Chief</td>
+                                  <td className="px-4 py-3 text-sm">Command Staff</td>
+                                  <td className="px-4 py-3 text-sm">Captain Maria Rodriguez</td>
+                                </>
                               )}
                               <td className="px-4 py-3">
                                 {new Date(entry.datetime).toLocaleString('en-US', {
@@ -938,7 +983,7 @@ export default function App() {
                       {/* Empty state */}
                       {activityLogEntries.length === 0 && !showAddEntryRow && (
                         <tr>
-                          <td colSpan={activityLogView === 'all' ? 4 : 3} className="px-4 py-8 text-center text-muted-foreground text-sm">
+                          <td colSpan={activityLogView === 'all' ? 6 : 3} className="px-4 py-8 text-center text-muted-foreground text-sm">
                             {activityLogView === 'all' ? 'No activity log entries yet.' : 'No activity log entries yet. Click "+ Add Entry" to get started.'}
                           </td>
                         </tr>
