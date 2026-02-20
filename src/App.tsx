@@ -588,15 +588,9 @@ export default function App() {
             </div>
           )}
 
-          {/* Map View Button */}
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-2 border-border text-foreground hover:bg-accent hover:text-accent-foreground transition-all duration-200"
-          >
-            <Map className="w-4 h-4" />
-            Map View
-          </Button>
+          <div className="w-8 h-8 rounded-full bg-black border border-white flex items-center justify-center cursor-pointer hover:bg-blue-600 hover:border-blue-600 transition-colors duration-200 text-white text-sm font-semibold select-none">
+            ?
+          </div>
 
           {/* AI Chat Toggle Button */}
           <Button
@@ -614,6 +608,28 @@ export default function App() {
             </svg>
             PRATUS AI
           </Button>
+
+          {/* Map View Button */}
+          <TooltipProvider delayDuration={100}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 w-8 p-0 border-border text-foreground hover:bg-accent hover:text-accent-foreground transition-all duration-200"
+                >
+                  <Map className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="bg-card border border-border text-foreground text-xs px-2 py-1.5">
+                Map View
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <div className="w-8 h-8 rounded-md border border-border flex items-center justify-center text-xs font-semibold select-none cursor-pointer hover:bg-blue-600 hover:border-blue-600 transition-colors duration-200" style={{ backgroundColor: '#333', color: '#d4956a' }}>
+            JK
+          </div>
         </div>
       </div>
 
