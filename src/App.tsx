@@ -41,6 +41,7 @@ export default function App() {
   const [showMapPanel, setShowMapPanel] = useState(false);
   const [calendarModalOpen, setCalendarModalOpen] = useState(false);
   const [showChatPanel, setShowChatPanel] = useState(false);
+  const [showDrawer, setShowDrawer] = useState(false);
   const [chatMessages, setChatMessages] = useState<Array<{id: string, role: 'user' | 'assistant', content: string, timestamp: Date}>>([
     {
       id: '1',
@@ -64,6 +65,7 @@ export default function App() {
   const [activityLogDateDropdownOpen, setActivityLogDateDropdownOpen] = useState(false);
   const [activityLogView, setActivityLogView] = useState<'mine' | 'all'>('mine');
   const [showPlanningP, setShowPlanningP] = useState(true);
+  const [showCalendar, setShowCalendar] = useState(false);
   const [activityLogEntries, setActivityLogEntries] = useState<Array<{id: string, datetime: string, timezone: string, activity: string}>>([]);
   const [newActivityDatetime, setNewActivityDatetime] = useState('');
   const [newActivityTimezone, setNewActivityTimezone] = useState('UTC');
@@ -80,7 +82,7 @@ export default function App() {
   const POSITION_OPTIONS = ['Operations Section Chief', 'Planning Section Chief', 'Logistics Section Chief', 'Finance Section Chief', 'Safety Officer', 'Public Information Officer', 'Liaison Officer'];
   const WORK_GROUP_OPTIONS = ['Command Staff', 'Operations', 'Planning', 'Logistics', 'Finance/Admin'];
 
-  const clearAllViews = () => { setShowActivityLog(false); setShowNotifications(false); setShowReports(false); setShowResources(false); setShowIncidentRoster(false); setShowPlanningP(false); };
+  const clearAllViews = () => { setShowActivityLog(false); setShowNotifications(false); setShowReports(false); setShowResources(false); setShowIncidentRoster(false); setShowPlanningP(false); setShowCalendar(false); };
 
   // Mock incident data - Updated for Oil Spill Alpha
   const [incidentData] = useState({
@@ -417,6 +419,16 @@ export default function App() {
             </div>
           </div>
           
+          {/* Hamburger Menu */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowDrawer(true)}
+            className="h-8 w-8 p-0 text-white hover:bg-white/10 transition-all duration-200"
+          >
+            <Menu className="w-5 h-5" />
+          </Button>
+
           {/* Incident Name and Start Time */}
           <div className="flex items-center gap-4">
             <h2 className="text-white">{incidentData.name}</h2>
@@ -447,48 +459,6 @@ export default function App() {
                   </TooltipTrigger>
                   <TooltipContent side="bottom" className="bg-card border border-border text-foreground text-xs px-2 py-1.5">
                     Notifications
-                  </TooltipContent>
-                </Tooltip>
-
-                {/* Activity Log Button */}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => { const next = !showActivityLog; clearAllViews(); if (next) setShowActivityLog(true); }}
-                      className={`h-8 w-8 p-0 transition-all duration-200 ${
-                        showActivityLog
-                          ? 'bg-accent text-accent-foreground hover:bg-accent/90'
-                          : 'text-foreground hover:bg-accent hover:text-accent-foreground'
-                      }`}
-                    >
-                      <List className="w-4 h-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" className="bg-card border border-border text-foreground text-xs px-2 py-1.5">
-                    Activity Log
-                  </TooltipContent>
-                </Tooltip>
-
-                {/* Reports Button */}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => { const next = !showReports; clearAllViews(); if (next) setShowReports(true); }}
-                      className={`h-8 w-8 p-0 transition-all duration-200 ${
-                        showReports
-                          ? 'bg-accent text-accent-foreground hover:bg-accent/90'
-                          : 'text-foreground hover:bg-accent hover:text-accent-foreground'
-                      }`}
-                    >
-                      <FileText className="w-4 h-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" className="bg-card border border-border text-foreground text-xs px-2 py-1.5">
-                    Reports
                   </TooltipContent>
                 </Tooltip>
 
@@ -674,6 +644,13 @@ export default function App() {
               <div className="flex-1 flex flex-col items-center justify-center p-6">
                 <Users className="w-12 h-12 text-muted-foreground mb-4" />
                 <p className="text-lg text-muted-foreground">[placeholder for incident roster]</p>
+              </div>
+            ) : showCalendar ? (
+              <div className="flex-1 flex flex-col p-6">
+                <CalendarView
+                  operationalPeriod={displayedPeriod}
+                  currentPhaseId={currentPhaseId}
+                />
               </div>
             ) : showActivityLog ? (
               /* Activity Log Inline View */
@@ -1208,6 +1185,70 @@ export default function App() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Left Drawer */}
+      {showDrawer && (
+        <>
+          <div
+            className="fixed inset-0 z-50 bg-black/50"
+            onClick={() => setShowDrawer(false)}
+          />
+          <div className="fixed top-0 left-0 z-50 h-full w-72 bg-card border-r border-border shadow-lg">
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <h3 className="text-foreground font-semibold">Menu</h3>
+              <button
+                onClick={() => setShowDrawer(false)}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <nav className="flex flex-col gap-1 p-4">
+              <button className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm text-foreground hover:bg-muted transition-colors text-left">
+                <FileText className="w-4 h-4 text-muted-foreground" />
+                Incident Overview
+              </button>
+              <button className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm text-foreground hover:bg-muted transition-colors text-left">
+                <Users className="w-4 h-4 text-muted-foreground" />
+                Incident Roster
+              </button>
+              <button
+                onClick={() => { clearAllViews(); setShowActivityLog(true); setShowDrawer(false); }}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm text-foreground hover:bg-muted transition-colors text-left"
+              >
+                <List className="w-4 h-4 text-muted-foreground" />
+                Activity Log
+              </button>
+              <button className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm text-foreground hover:bg-muted transition-colors text-left">
+                <Package className="w-4 h-4 text-muted-foreground" />
+                Resources
+              </button>
+              <button className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm text-foreground hover:bg-muted transition-colors text-left">
+                <Calendar className="w-4 h-4 text-muted-foreground" />
+                Planning P
+              </button>
+              <button
+                onClick={() => { clearAllViews(); setShowCalendar(true); setShowDrawer(false); }}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm text-foreground hover:bg-muted transition-colors text-left"
+              >
+                <Calendar className="w-4 h-4 text-muted-foreground" />
+                Calendar
+              </button>
+              <button className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm text-foreground hover:bg-muted transition-colors text-left">
+                <Map className="w-4 h-4 text-muted-foreground" />
+                Map View
+              </button>
+              <button
+                onClick={() => { clearAllViews(); setShowReports(true); setShowDrawer(false); }}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm text-foreground hover:bg-muted transition-colors text-left"
+              >
+                <Download className="w-4 h-4 text-muted-foreground" />
+                Reports
+              </button>
+            </nav>
+          </div>
+        </>
+      )}
 
     </div>
   );

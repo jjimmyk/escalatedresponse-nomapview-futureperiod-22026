@@ -31,6 +31,7 @@ interface CalendarViewProps {
 export function CalendarView({ phases }: CalendarViewProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<'month' | 'week'>('month');
+  const [mode, setMode] = useState<'calendar' | 'table'>('calendar');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isAddMeetingOpen, setIsAddMeetingOpen] = useState(false);
   const [viewMeetingOpen, setViewMeetingOpen] = useState(false);
@@ -500,22 +501,43 @@ export function CalendarView({ phases }: CalendarViewProps) {
         <div className="flex items-center gap-2">
           <div className="flex items-center bg-muted rounded-lg p-1">
             <Button
-              variant={view === 'month' ? 'default' : 'ghost'}
+              variant={mode === 'table' ? 'default' : 'ghost'}
               size="sm"
-              onClick={() => setView('month')}
+              onClick={() => setMode('table')}
               className="h-7 px-3"
             >
-              Month
+              Table View
             </Button>
             <Button
-              variant={view === 'week' ? 'default' : 'ghost'}
+              variant={mode === 'calendar' ? 'default' : 'ghost'}
               size="sm"
-              onClick={() => setView('week')}
+              onClick={() => setMode('calendar')}
               className="h-7 px-3"
             >
-              Week
+              Calendar View
             </Button>
           </div>
+
+          {mode === 'calendar' && (
+            <div className="flex items-center bg-muted rounded-lg p-1">
+              <Button
+                variant={view === 'month' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setView('month')}
+                className="h-7 px-3"
+              >
+                Month
+              </Button>
+              <Button
+                variant={view === 'week' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setView('week')}
+                className="h-7 px-3"
+              >
+                Week
+              </Button>
+            </div>
+          )}
           
           <Button
             onClick={() => setIsAddMeetingOpen(true)}
@@ -528,29 +550,71 @@ export function CalendarView({ phases }: CalendarViewProps) {
         </div>
       </div>
 
-      {/* Legend - Dynamic based on actual meeting types */}
-      <div className="px-4 py-2 border-b border-border bg-muted/30">
-        <div className="flex flex-wrap gap-3">
-          <span className="text-muted-foreground mr-2" style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)' }}>
-            Meeting Types:
-          </span>
-          {Array.from(uniqueMeetingTypes).sort().map(type => {
-            const colors = getMeetingColorScheme(type);
-            return (
-              <div key={type} className="flex items-center gap-1.5">
-                <div className={`w-3 h-3 rounded ${colors.bg} border ${colors.border}`} />
-                <span className="text-foreground" style={{ fontSize: 'var(--text-sm)' }}>
-                  {type}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Calendar Grid */}
+      {/* Content Area */}
       <div className="flex-1 overflow-auto">
-        {view === 'month' ? (
+        {mode === 'table' ? (
+          <div className="p-4">
+            <div className="border border-border rounded-lg overflow-hidden">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-black border-b border-border">
+                    <th className="text-left px-4 py-3 font-medium text-foreground">Start - End</th>
+                    <th className="text-left px-4 py-3 font-medium text-foreground">Meeting</th>
+                    <th className="text-left px-4 py-3 font-medium text-foreground">Agenda</th>
+                    <th className="text-left px-4 py-3 font-medium text-foreground">Attendees</th>
+                    <th className="text-left px-4 py-3 font-medium text-foreground">Location</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[...meetings]
+                    .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime())
+                    .map(meeting => {
+                      const start = new Date(meeting.dateTime);
+                      const end = new Date(start.getTime() + 60 * 60 * 1000);
+                      const formatDateTime = (d: Date) =>
+                        d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) +
+                        ' ' +
+                        d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+                      const colors = getMeetingColorScheme(meeting.phaseId);
+                      return (
+                        <tr
+                          key={meeting.id}
+                          className="border-b border-border hover:bg-muted/50 cursor-pointer transition-colors"
+                          onClick={() => { setSelectedMeeting(meeting); setViewMeetingOpen(true); }}
+                        >
+                          <td className="px-4 py-3 text-sm text-foreground">
+                            {formatDateTime(start)} – {formatDateTime(end)}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              <div className={`w-2.5 h-2.5 rounded-full ${colors.bg} border ${colors.border} flex-shrink-0`} />
+                              <span className="text-sm text-foreground">{meeting.title}</span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-foreground">
+                            {meeting.description ? meeting.description.split('\\n').map(item => item.replace(/^[•\-]\s*/, '')).filter(Boolean).join(', ') : '—'}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-foreground">
+                            {meeting.attendees ? meeting.attendees.split('\\n').join(', ') : '—'}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-foreground">
+                            {meeting.location || '—'}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  {meetings.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground text-sm">
+                        No meetings scheduled.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : view === 'month' ? (
           <div className="h-full p-4">
             <div className="grid grid-cols-7 gap-2 h-full">
               {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
